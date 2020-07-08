@@ -1,13 +1,8 @@
-import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
 import java.security.MessageDigest;
-import java.security.Timestamp;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
-
 
 public class Main {
     public static void main(String[] args) {
@@ -16,7 +11,7 @@ public class Main {
         System.out.print("Enter how many zeros the hash must start with: ");
         int zeros = scanner.nextInt();
         int count = 0;
-        while (true) {
+        while (count < 5) {
             count++;
             blockchain.generateBlock(count, zeros);
         }
@@ -63,22 +58,9 @@ class Blockchain{
         printThisBlock(block);
     }
 
-//method to validate the entire blockchain.
-//    public boolean validateBlockchain() {
-//        boolean valid = false;
-//        for (int i = 0; i < chain.size() - 1; i++) {
-//            if (chain.get(i).getHash() == chain.get(i+1).getHashPrevious()) {
-//                valid = true;
-//            }
-//            else {
-//                valid = false;
-//            }
-//        }
-//        return valid;
-//    }
 //method to print the attributes of a block
     public void printThisBlock(Block block) {
-        System.out.println("Block:");
+        System.out.println("\nBlock:");
         System.out.println("Id: " + block.getId());
         System.out.println("Timestamp: " + block.getTimeStamp());
         System.out.println("Magic number: " + block.getMagicNumber());
@@ -86,20 +68,8 @@ class Blockchain{
         System.out.println(block.getHashPrevious());
         System.out.println("Hash of the block:");
         System.out.println(block.getHash());
-        System.out.println("Block was generating for " + block.getTimeToGenerate() + " seconds\n");
+        System.out.println("Block was generating for " + block.getTimeToGenerate() + " seconds");
     }
-
-//    public void writeThisBlock(Block block, File filename) {
-//        try {
-//            SerializationUtils.serialize(block, filename);
-//        } catch (IOException | ClassNotFoundException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    public void readPreviousBlocks() {
-//
-//    }
 }
 
 //Block element class
