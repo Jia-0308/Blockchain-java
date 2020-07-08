@@ -1,33 +1,36 @@
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Scanner;
+import java.util.concurrent.ThreadLocalRandom;
 
 
 public class Main {
     public static void main(String[] args) {
-        //System.out.println("Hello World!");
-
+        Scanner scanner = new Scanner(System.in);
         Blockchain blockchain = new Blockchain();
-
-        blockchain.generateBlock(1);
-        blockchain.generateBlock(2);
-        blockchain.generateBlock(3);
-        blockchain.generateBlock(4);
-        blockchain.generateBlock(5);
-
-        if (blockchain.validateBlockchain()) {
-            blockchain.printBlockchain();
+        System.out.print("Enter how many zeros the hash must start with: ");
+        int zeros = scanner.nextInt();
+        int count = 0;
+        while (true) {
+            count++;
+            blockchain.generateBlock(count, zeros);
         }
     }
 }
 
+//Factory for generating blocks
 class Blockchain{
-
-    private ArrayList<Block> chain = new ArrayList();
+//private fields
     private String hashPrevious;
 
-    public void generateBlock(int Id) {
+//public methods
+//method to generate a block and print its attributes.
+    public void generateBlock(int Id, int zeros) {
         if (Id == 1) {
             hashPrevious = "0";
         }
@@ -35,43 +38,81 @@ class Blockchain{
         block.setTimeStamp();
         block.setHashPrevious(hashPrevious);
         block.setId(Id);
-        block.setHash(block.getId(), block.getTimeStamp(), block.getHashPrevious());
-        chain.add(block);
+
+        char[] zerosArray = new char[zeros];
+        for (int i = 0; i < zeros; i++) {
+            zerosArray[i] = '0';
+        }
+        String zerosString = new String(zerosArray);
+
+        boolean status = false;
+
+        long startTime = System.nanoTime();
+
+        int magicNumber = 0;
+
+        while (!status) {
+            magicNumber = Math.abs(ThreadLocalRandom.current().nextInt());
+            block.setHash(block.getId(), block.getTimeStamp(), block.getHashPrevious(), magicNumber);
+            status = block.getHash().substring(0, zeros).equals(zerosString) ? true : false;
+        }
+        long endTime = System.nanoTime();
+        block.setTimeToGenerate((endTime - startTime) / 1000000000);
+        block.setMagicNumber(magicNumber);
         hashPrevious = block.getHash();
+        printThisBlock(block);
     }
 
-    public boolean validateBlockchain() {
-        boolean valid = false;
-        for (int i = 0; i < chain.size() - 1; i++) {
-            if (chain.get(i).getHash() == chain.get(i+1).getHashPrevious()) {
-                valid = true;
-            }
-            else {
-                valid = false;
-            }
-        }
-        return valid;
+//method to validate the entire blockchain.
+//    public boolean validateBlockchain() {
+//        boolean valid = false;
+//        for (int i = 0; i < chain.size() - 1; i++) {
+//            if (chain.get(i).getHash() == chain.get(i+1).getHashPrevious()) {
+//                valid = true;
+//            }
+//            else {
+//                valid = false;
+//            }
+//        }
+//        return valid;
+//    }
+//method to print the attributes of a block
+    public void printThisBlock(Block block) {
+        System.out.println("Block:");
+        System.out.println("Id: " + block.getId());
+        System.out.println("Timestamp: " + block.getTimeStamp());
+        System.out.println("Magic number: " + block.getMagicNumber());
+        System.out.println("Hash of the previous block:");
+        System.out.println(block.getHashPrevious());
+        System.out.println("Hash of the block:");
+        System.out.println(block.getHash());
+        System.out.println("Block was generating for " + block.getTimeToGenerate() + " seconds\n");
     }
 
-    public void printBlockchain() {
-        for (int i = 0; i < chain.size(); i++) {
-            System.out.println("Block:");
-            System.out.println("Id: " + chain.get(i).getId());
-            System.out.println("Timestamp: " + chain.get(i).getTimeStamp());
-            System.out.println("Hash of the previous block:");
-            System.out.println(chain.get(i).getHashPrevious());
-            System.out.println("Hash of the block:");
-            System.out.println(chain.get(i).getHash() + "\n");
-        }
-    }
+//    public void writeThisBlock(Block block, File filename) {
+//        try {
+//            SerializationUtils.serialize(block, filename);
+//        } catch (IOException | ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    public void readPreviousBlocks() {
+//
+//    }
 }
 
-class Block{
+//Block element class
+class Block implements Serializable {
+//private fields
     private int Id;
     private long timeStamp;
     private String hashPrevious = new String();
     private String hash = new String();
+    private int magicNumber;
+    private long timeToGenerate;
 
+//Constructor
     public Block() {
         this.Id = Id;
         this.timeStamp = timeStamp;
@@ -79,6 +120,7 @@ class Block{
         this.hash = hash;
     }
 
+//Getters and Setters
     public int getId() {
         return Id;
     }
@@ -99,9 +141,9 @@ class Block{
         return hash;
     }
 
-    public void setHash(int Id, long timeStamp, String hashPrevious) {
+    public void setHash(int Id, long timeStamp, String hashPrevious, int magicNumber) {
         String IdString =
-                this.hash = StringUtil.applySha256(Integer.toString(Id) + Long.toString(timeStamp) + hashPrevious);
+                this.hash = StringUtil.applySha256(Integer.toString(Id) + Long.toString(timeStamp) + hashPrevious + magicNumber);
     }
 
     public String getHashPrevious() {
@@ -111,12 +153,25 @@ class Block{
     public void setHashPrevious(String hashPrevious) {
         this.hashPrevious = hashPrevious;
     }
+
+    public int getMagicNumber() {
+        return this.magicNumber;
+    }
+
+    public void setMagicNumber(int magicNumber) {
+        this.magicNumber = magicNumber;
+    }
+
+    public long getTimeToGenerate() {
+        return this.timeToGenerate;
+    }
+
+    public void setTimeToGenerate(long timeToGenerate) {
+        this.timeToGenerate = timeToGenerate;
+    }
 }
 
-
-
-
-
+//////////SHA256 Hashing//////////
 class StringUtil {
     /* Applies Sha256 to a string and returns a hash. */
     public static String applySha256(String input){
